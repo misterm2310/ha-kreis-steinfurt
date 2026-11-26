@@ -40,3 +40,37 @@ def test_parse_pagination_reads_source_total_and_page_size() -> None:
 def test_parse_pagination_returns_none_without_page_navigation() -> None:
     """A one-page source does not need pagination requests."""
     assert parse_pagination("<div>Keine weiteren Seiten</div>") is None
+
+
+def test_parse_einsaetze_ohne_ort_faellt_nicht_aus() -> None:
+    """Ein Einsatz ohne (oder mit leerem) Ort legt nicht die ganze Liste lahm."""
+    html = """
+    <ul>
+      <li class="kreisleitsystem-rows">
+        <span class="type">RD 1</span>
+        <span class="beginn"><span class="beginn-label">Beginn:</span>2026-11-24 11:05:00</span>
+        <span class="status"><span class="status-label">Zustand:</span>laufend</span>
+        <span class="operation"><span class="operation-label">Einsatznr.:</span>26070001</span>
+      </li>
+      <li class="kreisleitsystem-rows">
+        <span class="type">TH klein</span>
+        <span class="city"><span class="city-label">Ort:</span></span>
+        <span class="beginn"><span class="beginn-label">Beginn:</span>2026-11-24 11:06:00</span>
+        <span class="status"><span class="status-label">Zustand:</span>laufend</span>
+        <span class="operation"><span class="operation-label">Einsatznr.:</span>26070002</span>
+      </li>
+      <li class="kreisleitsystem-rows">
+        <span class="type">Brand 1</span>
+        <span class="city"><span class="city-label">Ort:</span>Steinfurt</span>
+        <span class="beginn"><span class="beginn-label">Beginn:</span>2026-11-24 11:07:00</span>
+        <span class="status"><span class="status-label">Zustand:</span>laufend</span>
+        <span class="operation"><span class="operation-label">Einsatznr.:</span>26070003</span>
+      </li>
+    </ul>
+    """
+
+    einsaetze = parse_einsaetze(html)
+
+    assert [e.ort for e in einsaetze] == ["Unbekannt", "Unbekannt", "Steinfurt"]
+    assert einsaetze[0].einsatzart == "RD 1"
+    assert einsaetze[0].einsatznr == "26070001"

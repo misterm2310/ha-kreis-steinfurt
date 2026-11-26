@@ -51,12 +51,21 @@ class _IncidentHTMLParser(HTMLParser):
             self._field = None
 
 
-def _value(row: dict[str, str], field: str, label: str = "") -> str:
-    """Normalize a required incident field."""
-    try:
-        value = row[field].strip().removeprefix(label).strip().lstrip("\ufeff")
-    except KeyError as err:
-        raise ValueError(f"Missing {field} in incident row") from err
+# Ersatztext, wenn die Leitstelle bei einem Einsatz keinen Ort veröffentlicht
+UNBEKANNTER_ORT = "Unbekannt"
+
+
+def _value(
+    row: dict[str, str], field: str, label: str = "", default: str | None = None
+) -> str:
+    """Normalize an incident field; optional fields fall back to ``default``."""
+    if field not in row:
+        if default is not None:
+            return default
+        raise ValueError(f"Missing {field} in incident row")
+    value = row[field].strip().removeprefix(label).strip().lstrip("\ufeff")
+    if not value and default is not None:
+        return default
     return value
 
 
@@ -73,7 +82,7 @@ def parse_einsaetze(html: str) -> list[Einsatz]:
             Einsatz(
                 einsatznr=_value(row, "operation", "Einsatznr.:"),
                 einsatzart=_value(row, "type"),
-                ort=_value(row, "city", "Ort:"),
+                ort=_value(row, "city", "Ort:", default=UNBEKANNTER_ORT),
                 beginn=datetime.strptime(beginn, "%Y-%m-%d %H:%M:%S"),
                 zustand=_value(row, "status", "Zustand:"),
             )
