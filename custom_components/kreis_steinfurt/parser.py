@@ -51,8 +51,9 @@ class _IncidentHTMLParser(HTMLParser):
             self._field = None
 
 
-# Ersatztext, wenn die Leitstelle bei einem Einsatz keinen Ort veröffentlicht
-UNBEKANNTER_ORT = "Unbekannt"
+# Ersatztext, wenn die Leitstelle bei einem Einsatz Ort, Art oder Zustand nicht veröffentlicht
+UNBEKANNT = "Unbekannt"
+UNBEKANNTER_ORT = UNBEKANNT
 
 
 def _value(
@@ -81,10 +82,10 @@ def parse_einsaetze(html: str) -> list[Einsatz]:
         einsaetze.append(
             Einsatz(
                 einsatznr=_value(row, "operation", "Einsatznr.:"),
-                einsatzart=_value(row, "type"),
+                einsatzart=_value(row, "type", default=UNBEKANNT),
                 ort=_value(row, "city", "Ort:", default=UNBEKANNTER_ORT),
                 beginn=datetime.strptime(beginn, "%Y-%m-%d %H:%M:%S"),
-                zustand=_value(row, "status", "Zustand:"),
+                zustand=_value(row, "status", "Zustand:", default=UNBEKANNT),
             )
         )
 

@@ -74,3 +74,37 @@ def test_parse_einsaetze_ohne_ort_faellt_nicht_aus() -> None:
     assert [e.ort for e in einsaetze] == ["Unbekannt", "Unbekannt", "Steinfurt"]
     assert einsaetze[0].einsatzart == "RD 1"
     assert einsaetze[0].einsatznr == "26070001"
+
+
+def test_parse_einsaetze_ohne_art_und_zustand_faellt_nicht_aus() -> None:
+    """Fehlen Einsatzart oder Zustand, steht dort „Unbekannt“."""
+    html = """
+    <ul>
+      <li class="kreisleitsystem-rows">
+        <span class="city"><span class="city-label">Ort:</span>Rheine</span>
+        <span class="beginn"><span class="beginn-label">Beginn:</span>2026-11-24 11:05:00</span>
+        <span class="operation"><span class="operation-label">Einsatznr.:</span>26070010</span>
+      </li>
+    </ul>
+    """
+
+    einsatz = parse_einsaetze(html)[0]
+
+    assert einsatz.einsatzart == "Unbekannt"
+    assert einsatz.zustand == "Unbekannt"
+    assert einsatz.ort == "Rheine"
+
+
+def test_parse_einsaetze_ohne_einsatznummer_bleibt_fehler() -> None:
+    """Ohne Einsatznummer lassen sich Einsätze nicht unterscheiden: weiter ein Fehler."""
+    import pytest
+
+    html = """
+    <ul><li class="kreisleitsystem-rows">
+      <span class="type">RD 1</span>
+      <span class="beginn"><span class="beginn-label">Beginn:</span>2026-11-24 11:05:00</span>
+    </li></ul>
+    """
+
+    with pytest.raises(ValueError):
+        parse_einsaetze(html)
